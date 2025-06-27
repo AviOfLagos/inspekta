@@ -33,14 +33,14 @@ export default function NotFound() {
           {subdomain ? (
             <>
               <span className="text-blue-600">{subdomain}</span>.{rootDomain}{' '}
-              doesn't exist
+              doesn&apos;t exist
             </>
           ) : (
             'Subdomain Not Found'
           )}
         </h1>
         <p className="mt-3 text-lg text-gray-600">
-          This subdomain hasn't been created yet.
+          This subdomain hasn&apos;t been created yet.
         </p>
         <div className="mt-6">
           <Link
