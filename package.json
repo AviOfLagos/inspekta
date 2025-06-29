@@ -2,10 +2,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "db:seed": "tsx scripts/seed.ts",
     "db:reset": "prisma db push --force-reset && npm run db:seed",
     "test:swagger": "node scripts/test-swagger.js"

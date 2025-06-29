@@ -1,12 +1,18 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm build",
   "devCommand": "pnpm dev",
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --frozen-lockfile",
   "framework": "nextjs",
   "regions": ["iad1"],
   "functions": {
     "app/api/**": {
       "maxDuration": 30
+    }
+  },
+  "build": {
+    "env": {
+      "SKIP_ENV_VALIDATION": "1",
+      "NEXT_TELEMETRY_DISABLED": "1"
     }
   },
   "headers": [
