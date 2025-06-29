@@ -32,7 +32,7 @@ export default function NotFound() {
         <h1 className="text-4xl font-bold tracking-tight text-gray-900">
           {subdomain ? (
             <>
-              <span className="text-blue-600">{subdomain}</span>.{rootDomain}{' '}
+              <span className="text-primary">{subdomain}</span>.{rootDomain}{' '}
               doesn&apos;t exist
             </>
           ) : (
@@ -45,7 +45,7 @@ export default function NotFound() {
         <div className="mt-6">
           <Link
             href={`${protocol}://${rootDomain}`}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             {subdomain ? `Create ${subdomain}` : `Go to ${rootDomain}`}
           </Link>

@@ -1,0 +1,576 @@
+// Inspekta Database Schema
+// Multi-tenant real estate platform with role-based access
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Core User System
+enum UserRole {
+  CLIENT
+  AGENT
+  INSPECTOR
+  COMPANY_ADMIN
+  PLATFORM_ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  emailVerified DateTime?
+  name          String?
+  username      String?  @unique
+  phone         String?
+  image         String?
+  role          UserRole
+  
+  // Verification fields
+  verificationStatus VerificationStatus @default(PENDING)
+  ninNumber         String?
+  bvnNumber         String?
+  
+  // Company relationship
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
+  
+  // User-specific profiles
+  clientProfile    ClientProfile?
+  agentProfile     AgentProfile?
+  inspectorProfile InspectorProfile?
+  
+  // Relationships
+  accounts          Account[]
+  sessions          Session[]
+  listings          Listing[]
+  inspections       Inspection[]
+  referrals         Referral[]
+  earnings          Earning[]
+  subscriptions     Subscription[]
+  inspectionClients InspectionClient[]
+  uploadedFiles     UploadedFile[]
+  inquiries         Inquiry[]
+  savedListings     SavedListing[]
+  payments          Payment[]
+  payouts           Payout[]
+  notifications     Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Company/Multi-tenant system
+model Company {
+  id          String @id @default(cuid())
+  name        String
+  subdomain   String @unique
+  customDomain String?
+  logo        String?
+  description String?
+  
+  // Company verification
+  cacNumber   String?
+  verificationStatus VerificationStatus @default(PENDING)
+  
+  // Subscription
+  subscriptionTier String @default("BASIC") // BASIC, COMPANY
+  
+  // Relationships
+  users       User[]
+  listings    Listing[]
+  inspections Inspection[]
+  earnings    Earning[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// User Profiles
+model ClientProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Client preferences
+  preferredLocation String?
+  budgetMin         Float?
+  budgetMax         Float?
+  propertyType      String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AgentProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Agent verification
+  guarantor1Name    String?
+  guarantor1Phone   String?
+  guarantor2Name    String?
+  guarantor2Phone   String?
+  
+  // Agent stats
+  listingCount      Int @default(0)
+  successfulDeals   Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InspectorProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Inspector details
+  location          String?
+  availabilityRadius Float? // km radius
+  rating            Float?  @default(0)
+  
+  // Inspector stats
+  inspectionCount   Int @default(0)
+  
+  availabilities    InspectorAvailability[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Property & Listing System
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  DUPLEX
+  OFFICE
+  SHOP
+  WAREHOUSE
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  RENTED
+  REMOVED
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  description String
+  type        PropertyType
+  status      ListingStatus @default(ACTIVE)
+  
+  // Location
+  address     String
+  city        String
+  state       String
+  latitude    Float?
+  longitude   Float?
+  
+  // Pricing
+  price       Float
+  currency    String @default("NGN")
+  
+  // Property details
+  bedrooms    Int?
+  bathrooms   Int?
+  area        Float? // in sqm
+  
+  // Media
+  images      String[] // Array of image URLs
+  videoUrl    String?
+  
+  // Ownership
+  agentId     String
+  agent       User    @relation(fields: [agentId], references: [id])
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  
+  // Features
+  featured    Boolean @default(false)
+  tier        String  @default("BASIC") // BASIC, FEATURED
+  
+  // Referral tracking
+  referralCode String  @unique @default(cuid())
+  
+  // Relationships
+  inspections   Inspection[]
+  referrals     Referral[]
+  uploadedFiles UploadedFile[]
+  inquiries     Inquiry[]
+  savedBy       SavedListing[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Inspection System
+enum InspectionType {
+  VIRTUAL
+  PHYSICAL
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Inspection {
+  id          String           @id @default(cuid())
+  type        InspectionType
+  status      InspectionStatus @default(SCHEDULED)
+  
+  // Scheduling
+  scheduledAt DateTime
+  duration    Int             @default(30) // minutes
+  
+  // Participants
+  listingId   String
+  listing     Listing         @relation(fields: [listingId], references: [id])
+  inspectorId String?
+  inspector   User?           @relation(fields: [inspectorId], references: [id])
+  companyId   String?
+  company     Company?        @relation(fields: [companyId], references: [id])
+  
+  // Virtual inspection details
+  meetingUrl  String?
+  recordingUrl String?
+  
+  // Payment
+  fee         Float?
+  paid        Boolean         @default(false)
+  
+  // Client registrations
+  clients     InspectionClient[]
+  payments    Payment[]
+  
+  // Earnings tracking
+  earnings    Earning[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Join table for inspection clients
+model InspectionClient {
+  id           String     @id @default(cuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  clientId     String
+  client       User       @relation(fields: [clientId], references: [id])
+  
+  // Client interest status
+  interested   Boolean    @default(false)
+  notes        String?
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([inspectionId, clientId])
+}
+
+// Referral System
+model Referral {
+  id        String  @id @default(cuid())
+  code      String  @unique
+  
+  // Referral relationship
+  referrerId String
+  referrer   User    @relation(fields: [referrerId], references: [id])
+  listingId  String
+  listing    Listing @relation(fields: [listingId], references: [id])
+  
+  // Tracking
+  clicks    Int     @default(0)
+  conversions Int   @default(0)
+  
+  // Earnings
+  totalEarnings Float @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Earnings & Payment System
+enum EarningType {
+  INSPECTION_FEE
+  REFERRAL_BONUS
+  SUBSCRIPTION_COMMISSION
+  RENT_COMMISSION
+}
+
+model Earning {
+  id          String      @id @default(cuid())
+  type        EarningType
+  amount      Float
+  currency    String      @default("NGN")
+  
+  // Ownership
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  companyId   String?
+  company     Company?    @relation(fields: [companyId], references: [id])
+  
+  // Source tracking
+  inspectionId String?
+  inspection   Inspection? @relation(fields: [inspectionId], references: [id])
+  
+  // Payment status
+  paid        Boolean     @default(false)
+  paidAt      DateTime?
+  
+  // Revenue split (60% inspector, 30% agent, 10% platform)
+  platformCut Float       @default(0.1)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Subscription System
+enum SubscriptionType {
+  INSPECTION_MONTHLY
+  AGENT_MONTHLY
+  COMPANY_MONTHLY
+}
+
+model Subscription {
+  id       String           @id @default(cuid())
+  type     SubscriptionType
+  
+  // Ownership
+  userId   String
+  user     User             @relation(fields: [userId], references: [id])
+  
+  // Subscription details
+  amount   Float
+  currency String           @default("NGN")
+  
+  // Status
+  active   Boolean          @default(true)
+  expiresAt DateTime
+  payments Payment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// File Upload System
+enum FileType {
+  IMAGE
+  DOCUMENT
+  VIDEO
+}
+
+model UploadedFile {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  url          String   @unique
+  size         Int
+  mimeType     String
+  type         FileType
+
+  // Relationships
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  propertyId   String?
+  property     Listing? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Inquiry System
+enum InquiryStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+model Inquiry {
+  id        String        @id @default(cuid())
+  message   String
+  status    InquiryStatus @default(NEW)
+
+  // Relationships
+  listingId String
+  listing   Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  clientId  String
+  client    User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+// Saved Listings System
+model SavedListing {
+  id        String   @id @default(cuid())
+  notes     String?
+
+  // Relationships
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([listingId, userId])
+}
+
+// Inspector Availability System
+model InspectorAvailability {
+  id                String   @id @default(cuid())
+  inspectorProfileId String
+  inspectorProfile  InspectorProfile @relation(fields: [inspectorProfileId], references: [id], onDelete: Cascade)
+  date              DateTime
+  isAvailable       Boolean  @default(true)
+  startTime         DateTime
+  endTime           DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([inspectorProfileId, date])
+}
+
+// Payment System
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id                String         @id @default(cuid())
+  amount            Float
+  currency          String         @default("NGN")
+  status            PaymentStatus  @default(PENDING)
+  paymentGatewayId  String?        @unique // Transaction ID from payment gateway
+  
+  // Relationships
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+  inspectionId      String?
+  inspection        Inspection?    @relation(fields: [inspectionId], references: [id])
+  subscriptionId    String?
+  subscription      Subscription?  @relation(fields: [subscriptionId], references: [id])
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+
+// Payout System
+enum PayoutStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  amount      Float
+  currency    String       @default("NGN")
+  status      PayoutStatus @default(PENDING)
+  
+  // Relationships
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// Notification System
+enum NotificationType {
+  INSPECTION_SCHEDULED
+  INSPECTION_ACCEPTED
+  INSPECTION_COMPLETED
+  INSPECTION_CANCELLED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  INQUIRY_RECEIVED
+  LISTING_SAVED
+  VERIFICATION_APPROVED
+  VERIFICATION_REJECTED
+  GENERAL
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  
+  // Relationships
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Optional related entities
+  inspectionId String?
+  listingId    String?
+  paymentId    String?
+  
+  // Additional data (JSON)
+  metadata  Json?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

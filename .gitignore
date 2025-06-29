@@ -39,3 +39,48 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated/prisma
+
+# Logs
+logs
+*.log
+dev-debug.log
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+.env.local 
+
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 
+
+
+# scripts
+/scripts
+/scripts/*
+
+# product Info
+/productInfo
+/productInfo/*
+
+
+#gemini CLI
+/gemini-cli
+gemini-cli
+
+.claude
+.github

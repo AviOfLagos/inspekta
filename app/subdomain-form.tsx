@@ -45,7 +45,7 @@ function SubdomainInput({ defaultValue }: { defaultValue?: string }) {
             required
           />
         </div>
-        <span className="bg-gray-100 px-3 border border-l-0 border-input rounded-r-md text-gray-500 min-h-[36px] flex items-center">
+        <span className="bg-muted px-3 border border-l-0 border-input rounded-r-md text-muted-foreground min-h-[36px] flex items-center">
           .{rootDomain}
         </span>
       </div>
@@ -80,7 +80,7 @@ function IconPicker({
               {icon ? (
                 <span className="text-3xl">{icon}</span>
               ) : (
-                <span className="text-gray-400 text-sm font-normal">
+                <span className="text-muted-foreground text-sm font-normal">
                   No icon selected
                 </span>
               )}
@@ -116,7 +116,7 @@ function IconPicker({
             </Popover>
           </Card>
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Select an emoji to represent your subdomain
         </p>
       </div>

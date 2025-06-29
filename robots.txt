@@ -1,0 +1,92 @@
+# Inspekta Platform - Real Estate Marketplace
+# Production robots.txt for SEO optimization
+
+User-agent: *
+
+# Allow crawling of all main pages
+Allow: /
+Allow: /marketplace
+Allow: /about
+Allow: /contact
+Allow: /faq
+Allow: /careers
+Allow: /secure-inspections
+Allow: /transparent-process
+Allow: /why-trust-agents
+Allow: /terms
+Allow: /privacy
+
+# Allow authentication pages for indexing
+Allow: /auth/register
+Allow: /auth/login
+
+# Allow API documentation
+Allow: /docs
+
+# Allow subdomain creation page
+Allow: /subdomain-creation
+
+# Block sensitive areas
+Disallow: /admin
+Disallow: /client
+Disallow: /agent
+Disallow: /inspector
+Disallow: /company
+Disallow: /api/
+Disallow: /auth/verify-email
+Disallow: /auth/forgot-password
+Disallow: /auth/reset-password
+Disallow: /unauthorized
+
+# Block dynamic user-specific content
+Disallow: /agents/*/
+Disallow: /listings/*/
+Disallow: /s/*/
+
+# Block development and temporary files
+Disallow: /_next/
+Disallow: /static/
+Disallow: /.well-known/
+Disallow: /favicon.ico
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://inspekta-plum.vercel.app/sitemap.xml
+
+# Additional directives for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
+
+# Block AI training crawlers (optional - adjust based on policy)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Allow legitimate SEO and monitoring tools
+User-agent: AhrefsBot
+Allow: /
+
+User-agent: SemrushBot
+Allow: /
+
+User-agent: MJ12bot
+Allow: /
