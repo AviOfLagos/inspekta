@@ -1,0 +1,12 @@
+# Vercel build optimization
+productInfo/
+.env.example
+*.md
+.git/
+.gitignore
+.pnpmfile.cjs
+scripts/deploy.sh
+scripts/vercel-deploy.sh
+scripts/test-swagger.js
+scripts/install-toast-dependencies.sh
+tsconfig.tsbuildinfo
