@@ -8,7 +8,8 @@ import {
   Home, 
   Search, 
   Shield,
-  UserCheck
+  UserCheck,
+  Building
 } from 'lucide-react';
 
 interface NavItem {
@@ -25,35 +26,42 @@ const navItems: NavItem[] = [
     label: 'Public',
     path: '/',
     icon: Home,
-    color: 'dark:text-white text-black bg-secondary hover:bg-secondary/80'
+    color: 'text-white bg-secondary hover:bg-secondary/80'
   },
   {
     id: 'client',
     label: 'Client',
     path: '/client',
     icon: Search,
-    color: 'dark:text-black bg-primary hover:bg-primary/80'
+    color: 'text-white bg-primary hover:bg-primary/80'
   },
   {
     id: 'agent',
     label: 'Agent',
     path: '/agent',
     icon: Users,
-    color: 'text-black bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600'
+    color: 'text-white bg-emerald-600 hover:bg-emerald-700'
   },
   {
     id: 'inspector',
     label: 'Inspector',
     path: '/inspector',
     icon: UserCheck,
-    color: 'bg-amber-600 hover:bg-amber-700 dark:text-black dark:bg-amber-500 dark:hover:bg-amber-600'
+    color: 'text-white bg-amber-600 hover:bg-amber-700'
+  },
+  {
+    id: 'company',
+    label: 'Company',
+    path: '/company',
+    icon: Building,
+    color: 'text-white bg-cyan-600 hover:bg-cyan-700'
   },
   {
     id: 'admin',
     label: 'Admin',
     path: '/admin',
     icon: Shield,
-    color: 'bg-violet-600 hover:bg-violet-700 dark:text-black dark:bg-violet-500 dark:hover:bg-violet-600'
+    color: 'text-white bg-violet-600 hover:bg-violet-700'
   }
 ];
 

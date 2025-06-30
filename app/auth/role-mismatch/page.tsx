@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, User, Shield, Search, Users, UserCheck, Building } from 'lucide-react';
+import { ArrowRight, Shield, Search, Users, UserCheck, Building } from 'lucide-react';
 
 interface RoleInfo {
   id: string;
@@ -111,7 +111,7 @@ function RoleMismatchContent() {
             <div className="text-4xl">🔄</div>
             <h1 className="text-2xl font-bold">Role Access Required</h1>
             <p className="text-muted-foreground">
-              You're trying to access a feature that requires a different account type.
+              You&apos;re trying to access a feature that requires a different account type.
             </p>
           </div>
 

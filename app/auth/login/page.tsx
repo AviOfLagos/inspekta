@@ -83,8 +83,8 @@ function LoginForm() {
             {intendedRole && (
               <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Note:</strong> You're trying to access {intendedRole.replace('_', ' ')} features. 
-                  After signing in, we'll help you get the right access.
+                  <strong>Note:</strong> You&apos;re trying to access {intendedRole.replace('_', ' ')} features. 
+                  After signing in, we&apos;ll help you get the right access.
                 </p>
               </div>
             )}
