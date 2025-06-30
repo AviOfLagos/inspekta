@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, callbackUrl } = validation.data;
+    const { email, password, callbackUrl, intendedRole } = validation.data;
 
     // Authenticate user
     const result = await authenticateUser(email, password);
@@ -91,12 +91,30 @@ export async function POST(request: Request) {
     // Create session
     await createSession(result.user!);
 
+    // Check for role mismatch if there was an intended role
+    let redirectUrl = callbackUrl || getDashboardUrlForRole(result.user!.role);
+    
+    if (intendedRole && callbackUrl) {
+      const userRole = result.user!.role.toLowerCase();
+      const normalizedIntendedRole = intendedRole.toLowerCase();
+      
+      // Check if user's role matches intended role
+      if (userRole !== normalizedIntendedRole && userRole !== 'platform_admin') {
+        // Create role mismatch redirect
+        const mismatchUrl = new URL('/auth/role-mismatch', request.url);
+        mismatchUrl.searchParams.set('currentRole', userRole);
+        mismatchUrl.searchParams.set('intendedRole', normalizedIntendedRole);
+        mismatchUrl.searchParams.set('intendedPath', callbackUrl);
+        redirectUrl = mismatchUrl.pathname + mismatchUrl.search;
+      }
+    }
+
     // Return success with user data and redirect URL
     return NextResponse.json({
       success: true,
       message: 'Login successful',
       user: result.user,
-      redirectUrl: callbackUrl || getDashboardUrlForRole(result.user!.role)
+      redirectUrl: redirectUrl
     });
 
   } catch (error) {

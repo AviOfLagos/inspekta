@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { useLogin } from '@/hooks/use-auth';
 
 interface FormErrors {
   email?: string;
@@ -20,11 +21,13 @@ function LoginForm() {
     password: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
+  const intendedRole = searchParams.get('intendedRole');
+  
+  const loginMutation = useLogin();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -36,7 +39,6 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrors({});
 
     // Basic validation
@@ -46,36 +48,29 @@ function LoginForm() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      setLoading(false);
       return;
     }
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          callbackUrl,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Redirect to the specified URL or dashboard
-        router.push(data.redirectUrl || '/');
-        router.refresh();
-      } else {
-        setErrors({ general: data.error || 'Sign in failed' });
+    loginMutation.mutate(
+      {
+        email: formData.email,
+        password: formData.password,
+        callbackUrl: callbackUrl || undefined,
+        intendedRole: intendedRole || undefined,
+      },
+      {
+        onSuccess: (data) => {
+          // Redirect to the specified URL or dashboard
+          router.push(data.redirectUrl || '/');
+          router.refresh();
+        },
+        onError: (error: any) => {
+          setErrors({ 
+            general: error.message || 'Sign in failed' 
+          });
+        },
       }
-    } catch (error) {
-      console.error('Sign in error:', error);
-      setErrors({ general: 'Network error. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   return (
@@ -85,6 +80,14 @@ function LoginForm() {
           <div className="text-center">
             <h1 className="text-2xl font-bold">Sign In to Inspekta</h1>
             <p className="text-muted-foreground">Welcome back! Please sign in to continue</p>
+            {intendedRole && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Note:</strong> You're trying to access {intendedRole.replace('_', ' ')} features. 
+                  After signing in, we'll help you get the right access.
+                </p>
+              </div>
+            )}
           </div>
 
           {errors.general && (
@@ -131,8 +134,8 @@ function LoginForm() {
               {errors.password && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.password}</p>}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing In...' : 'Sign In'}
+            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+              {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 

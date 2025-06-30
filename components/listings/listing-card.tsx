@@ -47,7 +47,7 @@ export function ListingCard({
   };
 
   return (
-    <Card className="w-full hover:shadow-lg transition-shadow overflow-hidden">
+    <Card className="w-full text-start hover:shadow-lg transition-shadow overflow-hidden">
       <CardHeader className="">
         <div className="flex justify-between items-start ">
           <CardTitle className="text-lg line-clamp-2 mr-1">{listing.title}</CardTitle>

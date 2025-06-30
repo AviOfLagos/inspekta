@@ -4,6 +4,7 @@ import './globals.css';
 import { TopNavbar } from '@/components/layout/top-navbar';
 import { FloatingDevNav } from '@/components/dev/floating-nav';
 import { ThemeProvider } from '@/components/theme-provider';
+import { QueryProvider } from '@/components/providers/query-provider';
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from '@/components/ui/sonner';
 
@@ -25,16 +26,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} antialiased`}>
-        <ThemeProvider
-          defaultTheme="system"
-          storageKey="inspekta-ui-theme"
-        >
-          <TopNavbar />
-          {children}
-          <FloatingDevNav />
-          <Toaster />
-          <Analytics/>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider
+            defaultTheme="system"
+            storageKey="inspekta-ui-theme"
+          >
+            <TopNavbar />
+            {children}
+            <FloatingDevNav />
+            <Toaster />
+            <Analytics/>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

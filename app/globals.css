@@ -121,6 +121,27 @@
   }
 }
 
+@layer components {
+  /* Custom interactive element class with comprehensive focus and validation states */
+  .interactive-element {
+    @apply focus-visible:border-ring 
+           focus-visible:ring-ring/50 
+           focus-visible:ring-[3px] 
+           aria-invalid:ring-destructive/20 
+           dark:aria-invalid:ring-destructive/40 
+           aria-invalid:border-destructive 
+           border 
+           bg-background 
+           shadow-xs 
+           hover:bg-accent 
+           hover:text-accent-foreground 
+           dark:bg-input/30 
+           dark:border-input 
+           dark:hover:bg-input/50 
+           rounded-lg;
+  }
+}
+
 .emoji-picker-container .epr-body::-webkit-scrollbar {
   width: 8px;
 }

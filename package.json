@@ -20,6 +20,8 @@
     "@radix-ui/react-slot": "^1.2.2",
     "@radix-ui/react-toast": "^1.2.14",
     "@sendgrid/mail": "^8.1.5",
+    "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-query-devtools": "^5.81.5",
     "@types/bcryptjs": "^3.0.0",
     "@types/swagger-ui-react": "^5.18.0",
     "@upstash/redis": "^1.34.9",
@@ -41,7 +43,8 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-react": "^5.25.3",
     "tailwind-merge": "^3.3.0",
-    "zod": "^3.25.67"
+    "zod": "^3.25.67",
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.6",

@@ -77,28 +77,44 @@ function isRoleAuthorized(userRole: string, pathname: string): boolean {
   return userRole === requiredRole;
 }
 
-function getSessionFromCookie(request: NextRequest) {
-  // Simple session extraction for now - will be enhanced with NextAuth integration
+async function getSessionFromCookie(request: NextRequest) {
   const sessionCookie = request.cookies.get('inspekta-session');
   if (!sessionCookie) return null;
   
   try {
-    // For now, return a mock user for existing functionality
-    // This will be replaced with actual JWT/NextAuth session validation
-    return {
-      user: {
-        id: 'demo-user',
-        email: 'demo@inspekta.com',
-        role: 'client',
-        isVerified: true,
-      }
-    };
-  } catch {
+    // Import JWT verification function
+    const { jwtVerify } = await import('jose');
+    const JWT_SECRET = new TextEncoder().encode(
+      process.env.JWT_SECRET || 'inspekta-super-secret-key-change-in-production'
+    );
+    
+    // Verify and decode the JWT token
+    const { payload } = await jwtVerify(sessionCookie.value, JWT_SECRET);
+    
+    // Validate that the payload has the required SessionUser fields
+    if (
+      typeof payload.id === 'string' &&
+      typeof payload.email === 'string' &&
+      typeof payload.role === 'string' &&
+      typeof payload.isVerified === 'boolean'
+    ) {
+      return {
+        user: {
+          id: payload.id,
+          email: payload.email,
+          role: payload.role.toLowerCase(), // Ensure consistent case
+          isVerified: payload.isVerified,
+        }
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Session verification error:', error);
     return null;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files and API routes that don't need protection
@@ -116,13 +132,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get session - this is simplified for now, will be enhanced
-  const session = getSessionFromCookie(request);
+  // Get session from JWT token
+  const session = await getSessionFromCookie(request);
 
   // Redirect unauthenticated users to login
   if (isAuthRequiredRoute(pathname) && !session) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
+    
+    // Track intended role if accessing role-specific route
+    const intendedRole = getUserRoleFromPath(pathname);
+    if (intendedRole) {
+      loginUrl.searchParams.set('intendedRole', intendedRole);
+    }
+    
     return NextResponse.redirect(loginUrl);
   }
 
@@ -135,6 +158,15 @@ export function middleware(request: NextRequest) {
 
     // Check role-based access
     if (!isRoleAuthorized(session.user.role, pathname)) {
+      const intendedRole = getUserRoleFromPath(pathname);
+      if (intendedRole) {
+        // Redirect to role mismatch page with information about intended access
+        const mismatchUrl = new URL('/auth/role-mismatch', request.url);
+        mismatchUrl.searchParams.set('currentRole', session.user.role);
+        mismatchUrl.searchParams.set('intendedRole', intendedRole);
+        mismatchUrl.searchParams.set('intendedPath', pathname);
+        return NextResponse.redirect(mismatchUrl);
+      }
       return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
 

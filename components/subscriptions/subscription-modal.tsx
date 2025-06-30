@@ -284,7 +284,7 @@ export function SubscriptionModal({ trigger, userRole, onSuccess }: Subscription
         {trigger}
       </DialogTrigger>
       
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className=" w-full  max-w-[90vw] min-w-[70vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <CreditCard className="w-5 h-5 mr-2" />
@@ -296,7 +296,7 @@ export function SubscriptionModal({ trigger, userRole, onSuccess }: Subscription
         </DialogHeader>
 
         <div className="py-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
             {plans.map((plan) => {
               const Icon = plan.icon;
               const isPopular = plan.popular;
@@ -306,10 +306,10 @@ export function SubscriptionModal({ trigger, userRole, onSuccess }: Subscription
               return (
                 <Card 
                   key={plan.id} 
-                  className={`relative ${isPopular ? 'border-2 border-primary shadow-lg' : 'border'}`}
+                  className={`w-full  ${isPopular ? 'border-2 border-primary shadow-lg' : 'border'}`}
                 >
                   {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div className="flex sm:hidden top-3 left-3 ">
                       <Badge className={isPopular ? 'bg-primary' : 'bg-orange-500'}>
                         {plan.badge}
                       </Badge>
@@ -339,8 +339,8 @@ export function SubscriptionModal({ trigger, userRole, onSuccess }: Subscription
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2">
+                  <CardContent className="space-y-4 h-full flex flex-col justify-between">
+                    <ul className="space-y-2  ">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start text-sm">
                           <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
@@ -385,30 +385,6 @@ export function SubscriptionModal({ trigger, userRole, onSuccess }: Subscription
           </div>
         </div>
 
-        {/* FAQ */}
-        <div className="border-t pt-6">
-          <h4 className="font-medium mb-3">Frequently Asked Questions</h4>
-          <div className="space-y-3">
-            <div>
-              <h5 className="font-medium text-sm">Can I upgrade or downgrade my plan?</h5>
-              <p className="text-sm text-gray-600">
-                Yes, you can change your plan at any time. Changes take effect immediately with pro-rated billing.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-medium text-sm">What payment methods do you accept?</h5>
-              <p className="text-sm text-gray-600">
-                We accept all major Nigerian bank cards, USSD payments, and bank transfers via Paystack.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-medium text-sm">Is there a free trial?</h5>
-              <p className="text-sm text-gray-600">
-                New users get a 7-day free trial of our premium features. No credit card required.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Enterprise Contact */}
         {userRole === 'COMPANY_ADMIN' && (

@@ -1,27 +1,34 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { LandingNav } from '@/components/navigation/landing-nav'; // Use LandingNav
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { ListingCard } from '@/components/listings/listing-card';
-import { Search, MapPin, SlidersHorizontal, Home, CheckSquare, CalendarCheck, DollarSign } from 'lucide-react'; // Added new icons
+import { EnhancedSearchInput } from '@/components/search/enhanced-search-input';
+import { MapPin, SlidersHorizontal, Home, CheckSquare, CalendarCheck, DollarSign } from 'lucide-react';
 import { Listing } from '@/types/listing';
+import { useCurrentSearch, useSearchActions } from '@/stores/search';
 
 export default function MarketplacePage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    type: '',
-    minPrice: '',
-    maxPrice: '',
-    location: '',
-    bedrooms: '',
-    bathrooms: '',
-  });
+  
+  // Use search store for persistence
+  const { query: searchTerm, filters } = useCurrentSearch();
+  const { setCurrentFilters } = useSearchActions();
+  
+  // Convert store filters to local format - memoized to prevent re-renders
+  const localFilters = useMemo(() => ({
+    type: filters.type || '',
+    minPrice: filters.minPrice?.toString() || '',
+    maxPrice: filters.maxPrice?.toString() || '',
+    location: filters.location || '',
+    bedrooms: filters.bedrooms?.toString() || '',
+    bathrooms: filters.bathrooms?.toString() || '',
+  }), [filters]);
 
   // Mock metrics data - replace with actual fetch later
   const mockMetrics = {
@@ -36,12 +43,12 @@ export default function MarketplacePage() {
       setLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append('location', searchTerm);
-      if (filters.type) params.append('type', filters.type);
-      if (filters.minPrice) params.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-      if (filters.location) params.append('location', filters.location);
-      if (filters.bedrooms) params.append('bedrooms', filters.bedrooms); // Add bedrooms filter
-      if (filters.bathrooms) params.append('bathrooms', filters.bathrooms); // Add bathrooms filter
+      if (localFilters.type) params.append('type', localFilters.type);
+      if (localFilters.minPrice) params.append('minPrice', localFilters.minPrice);
+      if (localFilters.maxPrice) params.append('maxPrice', localFilters.maxPrice);
+      if (localFilters.location) params.append('location', localFilters.location);
+      if (localFilters.bedrooms) params.append('bedrooms', localFilters.bedrooms);
+      if (localFilters.bathrooms) params.append('bathrooms', localFilters.bathrooms);
 
       const response = await fetch(`/api/listings?${params}`);
       if (response.ok) {
@@ -53,7 +60,7 @@ export default function MarketplacePage() {
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, filters]);
+  }, [searchTerm, localFilters]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -63,25 +70,39 @@ export default function MarketplacePage() {
     return () => clearTimeout(timeoutId);
   }, [fetchListings]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchListings();
+  // Handle search from enhanced search input
+  const handleSearch = (query: string, searchFilters: Record<string, any>) => {
+    // Update store with new filters
+    setCurrentFilters({
+      type: searchFilters.type,
+      minPrice: searchFilters.minPrice ? Number(searchFilters.minPrice) : undefined,
+      maxPrice: searchFilters.maxPrice ? Number(searchFilters.maxPrice) : undefined,
+      location: searchFilters.location,
+      bedrooms: searchFilters.bedrooms ? Number(searchFilters.bedrooms) : undefined,
+      bathrooms: searchFilters.bathrooms ? Number(searchFilters.bathrooms) : undefined,
+    });
+    
+    // fetchListings will be triggered by useEffect when store changes
   };
 
   const clearFilters = () => {
-    setFilters({
-      type: '',
-      minPrice: '',
-      maxPrice: '',
-      location: '',
-      bedrooms: '',
-      bathrooms: '',
+    setCurrentFilters({});
+  };
+
+  // Update store when local filters change
+  const updateFilter = (key: string, value: string) => {
+    const numericValue = ['minPrice', 'maxPrice', 'bedrooms', 'bathrooms'].includes(key) 
+      ? (value ? Number(value) : undefined) 
+      : value || undefined;
+      
+    setCurrentFilters({
+      ...filters,
+      [key]: numericValue
     });
-    setSearchTerm('');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <LandingNav /> {/* Changed to LandingNav */}
       
       {/* Hero Section */}
@@ -95,30 +116,26 @@ export default function MarketplacePage() {
               Discover verified properties with professional inspections
             </p>
 
-            {/* Main Search - compact */}
+            {/* Enhanced Search with History */}
             <div className="max-w-4xl mx-auto">
-              <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2"> {/* Reduced gap */}
-                <div className="flex-grow relative"> {/* Use flex-grow for input */}
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="flex-grow">
+                  <EnhancedSearchInput
                     placeholder="Search by location, type, or keywords..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11 py-3 text-lg bg-white h-12" // Increased height for better aesthetics
+                    onSearch={handleSearch}
+                    size="lg"
+                    className="text-lg"
                   />
                 </div>
-                <Button type="submit" size="lg" className="bg-orange-500 hover:bg-orange-600 px-8 h-12"> {/* Increased height */}
-                  Search
-                </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setShowFilters(!showFilters)} 
-                  className="bg-white text-primary hover:bg-gray-100 px-4 h-12 flex items-center justify-center" // Increased height and centered content
+                  className="bg-white text-primary hover:bg-gray-100 px-4 h-12 flex items-center justify-center"
                 >
                   <SlidersHorizontal className="w-5 h-5" />
                 </Button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -131,8 +148,8 @@ export default function MarketplacePage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Advanced Filters</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <select
-                value={filters.type}
-                onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+                value={localFilters.type}
+                onChange={(e) => updateFilter('type', e.target.value)}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="">All Types</option>
@@ -148,26 +165,26 @@ export default function MarketplacePage() {
               <Input
                 placeholder="Min Price (₦)"
                 type="number"
-                value={filters.minPrice}
-                onChange={(e) => setFilters(prev => ({ ...prev, minPrice: e.target.value }))}
+                value={localFilters.minPrice}
+                onChange={(e) => updateFilter('minPrice', e.target.value)}
               />
 
               <Input
                 placeholder="Max Price (₦)"
                 type="number"
-                value={filters.maxPrice}
-                onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
+                value={localFilters.maxPrice}
+                onChange={(e) => updateFilter('maxPrice', e.target.value)}
               />
 
               <Input
                 placeholder="Location (City, State, Address)"
-                value={filters.location}
-                onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                value={localFilters.location}
+                onChange={(e) => updateFilter('location', e.target.value)}
               />
 
               <select
-                value={filters.bedrooms}
-                onChange={(e) => setFilters(prev => ({ ...prev, bedrooms: e.target.value }))}
+                value={localFilters.bedrooms}
+                onChange={(e) => updateFilter('bedrooms', e.target.value)}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="">Any Bedrooms</option>
@@ -179,8 +196,8 @@ export default function MarketplacePage() {
               </select>
 
               <select
-                value={filters.bathrooms}
-                onChange={(e) => setFilters(prev => ({ ...prev, bathrooms: e.target.value }))}
+                value={localFilters.bathrooms}
+                onChange={(e) => updateFilter('bathrooms', e.target.value)}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="">Any Bathrooms</option>
@@ -202,7 +219,7 @@ export default function MarketplacePage() {
         {/* Marketplace Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
-            <CardContent className="pt-6 flex items-center space-x-4">
+            <CardContent className="pt-2 flex items-center space-x-4">
               <Home className="w-8 h-8 text-primary" />
               <div>
                 <div className="text-2xl font-bold text-primary">{mockMetrics.activeListings.toLocaleString()}</div>
@@ -211,16 +228,16 @@ export default function MarketplacePage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6 flex items-center space-x-4">
+            <CardContent className="pt-2 flex items-center space-x-4">
               <CheckSquare className="w-8 h-8 text-green-600" />
               <div>
-                <div className="text-2xl font-bold text-green-600">{mockMetrics.leasedHouses.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-600 ">{mockMetrics.leasedHouses.toLocaleString()}</div>
                 <p className="text-gray-600">Houses Leased</p>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6 flex items-center space-x-4">
+            <CardContent className="pt-2 flex items-center space-x-4">
               <CalendarCheck className="w-8 h-8 text-orange-600" />
               <div>
                 <div className="text-2xl font-bold text-orange-600">{mockMetrics.ongoingInspections.toLocaleString()}</div>
@@ -229,7 +246,7 @@ export default function MarketplacePage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6 flex items-center space-x-4">
+            <CardContent className="pt-2 flex items-center space-x-4">
               <DollarSign className="w-8 h-8 text-purple-600" />
               <div>
                 <div className="text-2xl font-bold text-purple-600">{mockMetrics.totalListings.toLocaleString()}</div>

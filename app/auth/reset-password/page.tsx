@@ -52,10 +52,9 @@ function ResetPasswordForm() {
 
   const validateToken = async (resetToken: string) => {
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetch(`/api/auth/reset-password?token=${encodeURIComponent(resetToken)}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: resetToken }),
       });
 
       const data = await response.json();

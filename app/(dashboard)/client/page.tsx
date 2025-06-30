@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ListingCard } from '@/components/listings/listing-card';
 import { SubscriptionStatus } from '@/components/subscriptions/subscription-status';
-import { SubscriptionModal } from '@/components/subscriptions/subscription-modal';
 import { 
   Search, 
   MapPin, 
@@ -21,8 +20,11 @@ import {
   Eye,
   Crown
 } from 'lucide-react';
-import { Listing } from '@/types/listing';
 import { DashboardTabs } from '@/components/ui/dashboard-tabs';
+import { useSession } from '@/hooks/use-auth';
+import { useClientDashboard } from '@/hooks/use-dashboard';
+import { useMarketplaceSearch, useListingActions, useSavedListings } from '@/hooks/use-listings';
+import { Listing } from '@/types/listing';
 
 interface ClientInspection {
   id: string;
@@ -42,12 +44,11 @@ interface ClientInspection {
   cost: number;
 }
 
-interface SavedProperty {
-  id: string;
-  listing: Listing;
-  savedAt: Date;
+interface SavedProperty extends Listing {
+  savedAt?: Date;
   notes?: string;
 }
+
 
 const clientTabs = [
   { id: 'browse', label: 'Browse Properties', icon: Home },
@@ -59,10 +60,6 @@ const clientTabs = [
 
 export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState('browse');
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [inspections, setInspections] = useState<ClientInspection[]>([]);
-  const [savedProperties, setSavedProperties] = useState<SavedProperty[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     type: '',
@@ -71,114 +68,65 @@ export default function ClientDashboard() {
     location: '',
   });
 
-  // Demo client ID - in real app, get from auth context
-  // const clientId = 'demo-client-id';
+  // Get authenticated user
+  const { data: user } = useSession();
+  
+  // Use React Query hooks for data fetching  
+  const dashboardQuery = useClientDashboard(user?.id || '');
+  const savedQuery = useSavedListings(user?.id || '');
+  const { data: listingsData, isLoading: listingsLoading } = useMarketplaceSearch({
+    search: searchTerm,
+    type: filters.type as 'APARTMENT' | 'HOUSE' | 'DUPLEX' | 'OFFICE' | 'WAREHOUSE' | undefined,
+    location: filters.location,
+    minPrice: filters.minPrice ? parseInt(filters.minPrice) : undefined,
+    maxPrice: filters.maxPrice ? parseInt(filters.maxPrice) : undefined,
+  });
+  
+  const { toggleSaved, isLoading: actionLoading } = useListingActions();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Simulate fetching listings
-      try {
-        const response = await fetch('/api/listings');
-        if (response.ok) {
-          const { listings: fetchedListings } = await response.json();
-          setListings(fetchedListings);
-          
-          // Mock client-specific data - using fetched listings
-          const mockSavedProperties: SavedProperty[] = [
-            {
-              id: 'saved-1',
-              listing: fetchedListings[0] || {} as Listing,
-              savedAt: new Date('2024-01-20'),
-              notes: 'Great location, near my office'
-            },
-            {
-              id: 'saved-2',
-              listing: fetchedListings[1] || {} as Listing,
-              savedAt: new Date('2024-01-18'),
-              notes: 'Love the modern design'
-            },
-            {
-              id: 'saved-3',
-              listing: fetchedListings[0] || {} as Listing,
-              savedAt: new Date('2024-01-20'),
-              notes: 'Great location, near my office'
-            },
-          ];
-          setSavedProperties(mockSavedProperties);
-        }
-      } catch (error) {
-        console.error('Error fetching listings:', error);
-      }
+  // Extract data from hooks
+  const listings = listingsData?.listings || [];
+  const inspections = dashboardQuery.data?.scheduledInspections || [];
+  const savedProperties: SavedProperty[] = (savedQuery.data || []) as unknown as SavedProperty[];
+  const loading = dashboardQuery.isLoading || savedQuery.isLoading || listingsLoading;
 
-      // Mock client-specific data
-      const mockInspections: ClientInspection[] = [
-        {
-          id: 'insp-1',
-          property: {
-            id: 'prop-1',
-            title: 'Modern 3BR Apartment',
-            address: '123 Victoria Island, Lagos',
-            image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'
-          },
-          type: 'PHYSICAL',
-          status: 'SCHEDULED',
-          scheduledAt: new Date('2024-01-25T14:00:00'),
-          inspector: { name: 'David Wilson', rating: 4.8 },
-          cost: 25000
-        },
-        {
-          id: 'insp-2',
-          property: {
-            id: 'prop-2',
-            title: 'Luxury Villa',
-            address: '456 Ikoyi Road, Lagos',
-            image: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop'
-          },
-          type: 'VIRTUAL',
-          status: 'COMPLETED',
-          scheduledAt: new Date('2024-01-15T10:00:00'),
-          inspector: { name: 'Sarah Johnson', rating: 4.9 },
-          cost: 15000
-        }
-      ];
-
-      setInspections(mockInspections);
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
-
-  const fetchListings = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('location', searchTerm);
-      if (filters.type) params.append('type', filters.type);
-      if (filters.minPrice) params.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-      if (filters.location) params.append('location', filters.location);
-
-      const response = await fetch(`/api/listings?${params}`);
-      if (response.ok) {
-        const { listings } = await response.json();
-        setListings(listings);
-      }
-    } catch (error) {
-      console.error('Error fetching listings:', error);
+  // Mock inspections for demo - in real app, would come from dashboard hook
+  const mockInspections: ClientInspection[] = [
+    {
+      id: 'insp-1',
+      property: {
+        id: 'prop-1',
+        title: 'Modern 3BR Apartment',
+        address: '123 Victoria Island, Lagos',
+        image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop'
+      },
+      type: 'PHYSICAL',
+      status: 'SCHEDULED',
+      scheduledAt: new Date('2024-01-25T14:00:00'),
+      inspector: { name: 'David Wilson', rating: 4.8 },
+      cost: 25000
+    },
+    {
+      id: 'insp-2',
+      property: {
+        id: 'prop-2',
+        title: 'Luxury Villa',
+        address: '456 Ikoyi Road, Lagos',
+        image: 'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400&h=300&fit=crop'
+      },
+      type: 'VIRTUAL',
+      status: 'COMPLETED',
+      scheduledAt: new Date('2024-01-15T10:00:00'),
+      inspector: { name: 'Sarah Johnson', rating: 4.9 },
+      cost: 15000
     }
-  }, [searchTerm, filters]);
+  ];
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchListings();
-    }, 300); // Debounce search
-
-    return () => clearTimeout(timeoutId);
-  }, [fetchListings]);
+  // Search is now handled by the useMarketplaceSearch hook with debouncing
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchListings();
+    // Search is automatically handled by useMarketplaceSearch hook
   };
 
   const formatCurrency = (amount: number) => {
@@ -203,9 +151,8 @@ export default function ClientDashboard() {
   //   // In real app, make API call to save property
   // };
 
-  const handleRemoveSaved = (savedId: string) => {
-    console.log('Removing saved property:', savedId);
-    // In real app, make API call to remove saved property
+  const handleRemoveSaved = (listingId: string) => {
+    toggleSaved(listingId, true); // true means it's currently saved, so unsave it
   };
 
   return (
@@ -348,7 +295,7 @@ export default function ClientDashboard() {
                   {listings.map((listing) => (
                     <ListingCard
                       key={listing.id}
-                      listing={listing}
+                      listing={listing as any}
                       onView={(id) => {
                         window.location.href = `/listings/${id}`;
                       }}
@@ -368,13 +315,13 @@ export default function ClientDashboard() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>My Inspections ({inspections.length})</CardTitle>
+                <CardTitle>My Inspections ({mockInspections.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {loading ? (
                     <div className="text-center py-8">Loading inspections...</div>
-                  ) : inspections.length === 0 ? (
+                  ) : mockInspections.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <Calendar className="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
                       <h3 className="text-lg font-semibold mb-2">No inspections scheduled</h3>
@@ -384,7 +331,7 @@ export default function ClientDashboard() {
                       </Button>
                     </div>
                   ) : (
-                    inspections.map((inspection) => (
+                    mockInspections.map((inspection) => (
                       <Card key={inspection.id} className="border-l-4 border-l-primary">
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start">
@@ -470,9 +417,9 @@ export default function ClientDashboard() {
                           <div className="flex justify-between items-start">
                             <div className="space-y-2">
                               <div>
-                                <h3 className="font-semibold">{saved.listing.title}</h3>
+                                <h3 className="font-semibold">{saved.title}</h3>
                                 <p className="text-sm text-muted-foreground">
-                                  {saved.listing.address}, {saved.listing.city}
+                                  {saved.address}, {saved.city}
                                 </p>
                               </div>
                               
@@ -483,9 +430,9 @@ export default function ClientDashboard() {
                               )}
 
                               <div className="flex items-center space-x-4 text-sm">
-                                <span>Saved: {new Date(saved.savedAt).toLocaleDateString()}</span>
+                                {saved.savedAt && <span>Saved: {new Date(saved.savedAt).toLocaleDateString()}</span>}
                                 <span className="font-medium text-primary">
-                                  {formatCurrency(saved.listing.price)}
+                                  {formatCurrency(saved.price)}
                                 </span>
                               </div>
                             </div>
@@ -494,7 +441,7 @@ export default function ClientDashboard() {
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => window.location.href = `/listings/${saved.listing.id}`}
+                                onClick={() => window.location.href = `/listings/${saved.id}`}
                               >
                                 <Eye className="w-4 h-4 mr-1" />
                                 View Property
@@ -503,6 +450,7 @@ export default function ClientDashboard() {
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => handleRemoveSaved(saved.id)}
+                                disabled={actionLoading}
                               >
                                 <XCircle className="w-4 h-4 mr-1" />
                                 Remove

@@ -125,19 +125,19 @@ export async function createUser(data: CreateUserData): Promise<AuthResponse> {
       return { success: false, error: 'User already exists' };
     }
 
-    // Hash password (will be stored when password field is added to schema)
-    await hashPassword(data.password);
+    // Hash password
+    const hashedPassword = await hashPassword(data.password);
 
     // Create user with role-specific profile
     const user = await prisma.user.create({
       data: {
         email: data.email,
+        password: hashedPassword,
         name: data.name,
         phone: data.phone,
         role: data.role,
         companyId: data.companyId,
         verificationStatus: VerificationStatus.PENDING,
-        // Note: We'll store the hashed password when we add it to the schema
         
         // Create role-specific profile
         ...(data.role === UserRole.CLIENT && {
@@ -174,8 +174,7 @@ export async function createUser(data: CreateUserData): Promise<AuthResponse> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function authenticateUser(email: string, _password: string): Promise<AuthResponse> {
+export async function authenticateUser(email: string, password: string): Promise<AuthResponse> {
   try {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -188,13 +187,15 @@ export async function authenticateUser(email: string, _password: string): Promis
       return { success: false, error: 'Invalid credentials' };
     }
 
-    // For now, we'll allow authentication without password verification
-    // This maintains compatibility with the existing demo system
-    // TODO: Add password verification when password field is added to schema
-    // const isValidPassword = await verifyPassword(password, user.password);
-    // if (!isValidPassword) {
-    //   return { success: false, error: 'Invalid credentials' };
-    // }
+    // Verify password if user has one set
+    if (user.password) {
+      const isValidPassword = await verifyPassword(password, user.password);
+      if (!isValidPassword) {
+        return { success: false, error: 'Invalid credentials' };
+      }
+    }
+    // For backwards compatibility, allow users without passwords (existing demo users)
+    // This will be removed once all users have passwords
 
     const sessionUser: SessionUser = {
       id: user.id,
@@ -404,11 +405,11 @@ export async function updatePassword(userId: string, newPassword: string): Promi
     // Hash the new password
     const hashedPassword = await hashPassword(newPassword);
     
-    // TODO: Update user password when password field is added to schema
-    // await prisma.user.update({
-    //   where: { id: userId },
-    //   data: { password: hashedPassword },
-    // });
+    // Update user password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
 
     // Delete all reset tokens for this user after successful password update
     await prisma.verificationToken.deleteMany({
@@ -418,8 +419,6 @@ export async function updatePassword(userId: string, newPassword: string): Promi
       },
     });
 
-    // For now, just log that password would be updated
-    console.log(`Password updated for user: ${userId}, hash: ${hashedPassword.substring(0, 10)}...`);
     return true;
   } catch (error) {
     console.error('Error updating password:', error);

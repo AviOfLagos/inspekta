@@ -118,7 +118,7 @@ export default function PropertyDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <TopNav />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -215,7 +215,7 @@ export default function PropertyDetailPage() {
                   <div className="text-3xl font-bold text-primary">
                     {formatPrice(listing.price)}
                   </div>
-                  <Badge variant="outline" className="text-lg px-3 py-1">
+                  <Badge variant="outline" className="text-sm px-3 py-1">
                     {getPropertyTypeLabel(listing.type)}
                   </Badge>
                 </div>
@@ -223,21 +223,21 @@ export default function PropertyDetailPage() {
                 {/* Property Specs */}
                 <div className="grid grid-cols-3 gap-4">
                   {listing.bedrooms && (
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center p-4 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-lg">
                       <Bed className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                       <div className="font-semibold">{listing.bedrooms}</div>
                       <div className="text-sm text-gray-600">Bedroom{listing.bedrooms > 1 ? 's' : ''}</div>
                     </div>
                   )}
                   {listing.bathrooms && (
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center p-4 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-lg">
                       <Bath className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                       <div className="font-semibold">{listing.bathrooms}</div>
                       <div className="text-sm text-gray-600">Bathroom{listing.bathrooms > 1 ? 's' : ''}</div>
                     </div>
                   )}
                   {listing.area && (
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-center p-4 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-lg">
                       <Square className="w-6 h-6 mx-auto mb-2 text-gray-600" />
                       <div className="font-semibold">{listing.area}</div>
                       <div className="text-sm text-gray-600">sqm</div>
@@ -288,10 +288,6 @@ export default function PropertyDetailPage() {
             {/* Agent Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Listed by
-                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center">

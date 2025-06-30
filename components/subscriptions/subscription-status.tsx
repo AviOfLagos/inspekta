@@ -320,7 +320,7 @@ export function SubscriptionStatus({ userRole }: SubscriptionStatusProps) {
               { date: '2023-12-01', amount: subscription.price, status: 'paid', invoice: 'INV-002' },
               { date: '2023-11-01', amount: subscription.price, status: 'paid', invoice: 'INV-003' },
             ].map((payment, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={index} className="flex items-center justify-between p-3 interactive-element rounded-lg">
                 <div>
                   <div className="font-medium">{formatDate(payment.date)}</div>
                   <div className="text-sm text-gray-600">{payment.invoice}</div>
@@ -350,7 +350,7 @@ export function SubscriptionStatus({ userRole }: SubscriptionStatusProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 interactive-element rounded-lg">
             <div className="flex items-center">
               <div className="w-8 h-6 bg-blue-600 rounded text-white text-xs flex items-center justify-center mr-3">
                 VISA

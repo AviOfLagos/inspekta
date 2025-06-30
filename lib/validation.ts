@@ -9,6 +9,7 @@ export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
   callbackUrl: z.string().optional(),
+  intendedRole: z.string().optional(),
 });
 
 export const registerSchema = z.object({
