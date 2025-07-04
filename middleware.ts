@@ -104,6 +104,7 @@ async function getSessionFromCookie(request: NextRequest) {
           email: payload.email,
           role: payload.role.toLowerCase(), // Ensure consistent case
           isVerified: payload.isVerified,
+          onboardingCompleted: payload.onboardingCompleted || false,
         }
       };
     }
@@ -154,6 +155,16 @@ export async function middleware(request: NextRequest) {
     // Check if email is verified (except for verification page)
     if (!session.user.isVerified && !pathname.startsWith('/auth/verify-email')) {
       return NextResponse.redirect(new URL('/auth/verify-email', request.url));
+    }
+
+    // Check if onboarding is completed (except for onboarding and auth pages)
+    if (session.user.isVerified && 
+        !session.user.onboardingCompleted && 
+        !pathname.startsWith('/onboarding') && 
+        !pathname.startsWith('/auth/') &&
+        isAuthRequiredRoute(pathname)) {
+      const onboardingUrl = new URL(`/onboarding/${session.user.role}`, request.url);
+      return NextResponse.redirect(onboardingUrl);
     }
 
     // Check role-based access

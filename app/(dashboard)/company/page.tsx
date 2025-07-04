@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { CompanyVerificationForm } from '@/components/verification/company-verification-form';
 import { SubscriptionStatus } from '@/components/subscriptions/subscription-status';
-import { SubscriptionModal } from '@/components/subscriptions/subscription-modal';
+import dynamic from 'next/dynamic';
+
+const SubscriptionModal = dynamic(() => import('@/components/subscriptions/subscription-modal').then(mod => mod.SubscriptionModal), { ssr: false });
 import { DashboardTabs } from '@/components/ui/dashboard-tabs';
 import { 
   Building, 

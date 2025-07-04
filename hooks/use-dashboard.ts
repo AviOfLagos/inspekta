@@ -31,6 +31,7 @@ interface ClientDashboardData {
   scheduledInspections: any[];
   completedInspections: any[];
   recentActivity: any[];
+  clientProfile?: any;
 }
 
 interface AdminDashboardData {

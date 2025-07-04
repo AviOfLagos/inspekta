@@ -12,10 +12,10 @@ interface DashboardLayoutProps {
   };
 }
 
-export function DashboardLayout({ children, user }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <TopNav user={user} />
+      <TopNav />
       <main className="flex-1">
         {children}
       </main>

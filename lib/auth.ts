@@ -19,6 +19,11 @@ export interface SessionUser {
   name: string | null;
   role: UserRole;
   isVerified: boolean;
+  onboardingCompleted: boolean;
+  onboardingStep: string | null;
+  phoneVerified: boolean;
+  profileSetupCompleted: boolean;
+  termsAccepted: boolean;
   companyId: string | null;
 }
 
@@ -72,6 +77,11 @@ export async function verifyToken(token: string): Promise<SessionUser | null> {
         name: payload.name as string | null,
         role: payload.role as UserRole,
         isVerified: payload.isVerified,
+        onboardingCompleted: payload.onboardingCompleted as boolean || false,
+        onboardingStep: payload.onboardingStep as string | null,
+        phoneVerified: payload.phoneVerified as boolean || false,
+        profileSetupCompleted: payload.profileSetupCompleted as boolean || false,
+        termsAccepted: payload.termsAccepted as boolean || false,
         companyId: payload.companyId as string | null,
       };
     }
@@ -164,6 +174,11 @@ export async function createUser(data: CreateUserData): Promise<AuthResponse> {
       name: user.name,
       role: user.role,
       isVerified: user.verificationStatus === VerificationStatus.VERIFIED,
+      onboardingCompleted: user.onboardingCompleted || false,
+      onboardingStep: user.onboardingStep ? user.onboardingStep.toString() : null,
+      phoneVerified: user.phoneVerified || false,
+      profileSetupCompleted: user.profileSetupCompleted || false,
+      termsAccepted: user.termsAccepted || false,
       companyId: user.companyId,
     };
 
@@ -203,6 +218,11 @@ export async function authenticateUser(email: string, password: string): Promise
       name: user.name,
       role: user.role,
       isVerified: user.verificationStatus === VerificationStatus.VERIFIED,
+      onboardingCompleted: user.onboardingCompleted || false,
+      onboardingStep: user.onboardingStep ? user.onboardingStep.toString() : null,
+      phoneVerified: user.phoneVerified || false,
+      profileSetupCompleted: user.profileSetupCompleted || false,
+      termsAccepted: user.termsAccepted || false,
       companyId: user.companyId,
     };
 

@@ -59,7 +59,7 @@ const authAPI = {
     const data = await response.json();
     
     if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Login failed');
+      throw new Error(data.error || data.message || 'Login failed');
     }
     
     return data.user;
@@ -76,7 +76,7 @@ const authAPI = {
     const data = await response.json();
     
     if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Registration failed');
+      throw new Error(data.error || data.message || 'Registration failed');
     }
     
     return data.user;
@@ -107,7 +107,7 @@ const authAPI = {
     const result = await response.json();
     
     if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to send reset email');
+      throw new Error(result.error || result.message || 'Failed to send reset email');
     }
     
     return result;
@@ -124,7 +124,7 @@ const authAPI = {
     const result = await response.json();
     
     if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Password reset failed');
+      throw new Error(result.error || result.message || 'Password reset failed');
     }
     
     return result;
@@ -141,7 +141,7 @@ const authAPI = {
     const result = await response.json();
     
     if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Email verification failed');
+      throw new Error(result.error || result.message || 'Email verification failed');
     }
     
     return result;
@@ -158,7 +158,7 @@ const authAPI = {
     const result = await response.json();
     
     if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to resend verification');
+      throw new Error(result.error || result.message || 'Failed to resend verification');
     }
     
     return result;

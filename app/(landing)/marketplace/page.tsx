@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { LandingNav } from '@/components/navigation/landing-nav'; // Use LandingNav
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { ListingCard } from '@/components/listings/listing-card';
 import { EnhancedSearchInput } from '@/components/search/enhanced-search-input';
 import { MapPin, SlidersHorizontal, Home, CheckSquare, CalendarCheck, DollarSign } from 'lucide-react';
 import { Listing } from '@/types/listing';
-import { useCurrentSearch, useSearchActions } from '@/stores/search';
+import { useCurrentSearch, useSetCurrentFilters } from '@/stores/search';
 
 export default function MarketplacePage() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -18,7 +17,7 @@ export default function MarketplacePage() {
   
   // Use search store for persistence
   const { query: searchTerm, filters } = useCurrentSearch();
-  const { setCurrentFilters } = useSearchActions();
+  const setCurrentFilters = useSetCurrentFilters();
   
   // Convert store filters to local format - memoized to prevent re-renders
   const localFilters = useMemo(() => ({
@@ -102,9 +101,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen ">
-      <LandingNav /> {/* Changed to LandingNav */}
-      
+    <section>
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -311,6 +308,6 @@ export default function MarketplacePage() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

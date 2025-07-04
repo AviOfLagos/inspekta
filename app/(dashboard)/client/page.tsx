@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ListingCard } from '@/components/listings/listing-card';
 import { SubscriptionStatus } from '@/components/subscriptions/subscription-status';
+import { ProfileSettings } from '@/components/profile/profile-settings';
+import { ProfileCompletion, getProfileFields } from '@/components/ui/profile-completion';
+import { InspectionList } from '@/components/inspections/inspection-list';
 import { 
   Search, 
   MapPin, 
@@ -176,40 +179,51 @@ export default function ClientDashboard() {
         {/* Browse Properties Tab */}
         {activeTab === 'browse' && (
           <div className="space-y-8">
-            {/* Stats Cards */}
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Available Properties</CardTitle>
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{listings.length}</div>
-                  <p className="text-xs text-muted-foreground">Active listings</p>
-                </CardContent>
-              </Card>
+            {/* Profile Completion Banner */}
+            <div className="grid gap-6 md:grid-cols-4">
+              <div className="md:col-span-1">
+                <ProfileCompletion
+                  userRole="client"
+                  fields={getProfileFields('client', user, dashboardQuery.data?.clientProfile)}
+                  onEditClick={() => setActiveTab('profile')}
+                />
+              </div>
               
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">My Inspections</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{inspections.length}</div>
-                  <p className="text-xs text-muted-foreground">Total scheduled</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Saved Properties</CardTitle>
-                  <Heart className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{savedProperties.length}</div>
-                  <p className="text-xs text-muted-foreground">Favorites</p>
-                </CardContent>
-              </Card>
+              {/* Stats Cards */}
+              <div className="md:col-span-3 grid gap-6 md:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Available Properties</CardTitle>
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{listings.length}</div>
+                    <p className="text-xs text-muted-foreground">Active listings</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">My Inspections</CardTitle>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{inspections.length}</div>
+                    <p className="text-xs text-muted-foreground">Total scheduled</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Saved Properties</CardTitle>
+                    <Heart className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{savedProperties.length}</div>
+                    <p className="text-xs text-muted-foreground">Favorites</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Search and Filters */}
@@ -313,80 +327,7 @@ export default function ClientDashboard() {
         {/* My Inspections Tab */}
         {activeTab === 'inspections' && (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Inspections ({mockInspections.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {loading ? (
-                    <div className="text-center py-8">Loading inspections...</div>
-                  ) : mockInspections.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calendar className="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
-                      <h3 className="text-lg font-semibold mb-2">No inspections scheduled</h3>
-                      <p>Start browsing properties and schedule your first inspection</p>
-                      <Button className="mt-4" onClick={() => setActiveTab('browse')}>
-                        Browse Properties
-                      </Button>
-                    </div>
-                  ) : (
-                    mockInspections.map((inspection) => (
-                      <Card key={inspection.id} className="border-l-4 border-l-primary">
-                        <CardContent className="pt-4">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                              <div className="flex items-center space-x-3">
-                                <div>
-                                  <h3 className="font-semibold">{inspection.property.title}</h3>
-                                  <p className="text-sm text-muted-foreground">{inspection.property.address}</p>
-                                </div>
-                                <Badge className={getStatusColor(inspection.status)}>
-                                  {inspection.status}
-                                </Badge>
-                                <Badge variant="outline">
-                                  {inspection.type}
-                                </Badge>
-                              </div>
-                              
-                              <div className="flex items-center space-x-4 text-sm">
-                                <div className="flex items-center">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  {new Date(inspection.scheduledAt).toLocaleDateString()} at{' '}
-                                  {new Date(inspection.scheduledAt).toLocaleTimeString([], { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit' 
-                                  })}
-                                </div>
-                                <div className="flex items-center">
-                                  <Star className="w-3 h-3 mr-1 text-yellow-500" />
-                                  {inspection.inspector.name} ({inspection.inspector.rating})
-                                </div>
-                                <span className="font-medium text-green-600">
-                                  {formatCurrency(inspection.cost)}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Eye className="w-4 h-4 mr-1" />
-                                View Details
-                              </Button>
-                              {inspection.status === 'SCHEDULED' && (
-                                <Button variant="outline" size="sm">
-                                  Reschedule
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <InspectionList userRole="CLIENT" />
           </div>
         )}
 
@@ -477,87 +418,27 @@ export default function ClientDashboard() {
         {/* My Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Profile Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Personal Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Full Name</label>
-                        <Input defaultValue="Demo Client" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Email</label>
-                        <Input defaultValue="client@example.com" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Phone</label>
-                        <Input defaultValue="+234 123 456 7890" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preferences */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Property Preferences</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Preferred Location</label>
-                        <Input defaultValue="Lagos, Nigeria" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Budget Range</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input placeholder="Min" defaultValue="5000000" />
-                          <Input placeholder="Max" defaultValue="50000000" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Property Type</label>
-                        <select className="w-full p-2 border rounded-md">
-                          <option>Any</option>
-                          <option>Apartment</option>
-                          <option>House</option>
-                          <option>Office</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notification Settings */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Notification Settings</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Email notifications for new properties</span>
-                      <input type="checkbox" defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">SMS alerts for inspection reminders</span>
-                      <input type="checkbox" defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Weekly property digest</span>
-                      <input type="checkbox" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline">Cancel</Button>
-                  <Button>Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProfileSettings
+              user={{
+                id: user?.id || '',
+                name: user?.name || null,
+                email: user?.email || '',
+                phone: user?.phone || null,
+                image: user?.image || null,
+                role: user?.role?.toLowerCase() || 'client',
+                verificationStatus: 'PENDING', // Would come from user data
+                onboardingCompleted: true // Would come from user data
+              }}
+              profile={dashboardQuery.data?.clientProfile}
+              onSave={async (data) => {
+                console.log('Saving profile data:', data);
+                // Implement save logic here
+              }}
+              onImageUpdate={async (imageUrl) => {
+                console.log('Updating profile image:', imageUrl);
+                // Implement image update logic here
+              }}
+            />
           </div>
         )}
       </div>

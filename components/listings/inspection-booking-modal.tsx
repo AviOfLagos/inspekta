@@ -50,6 +50,7 @@ export function InspectionBookingModal({
   const [step, setStep] = useState<'select' | 'schedule' | 'payment' | 'confirmation'>('select');
   const [selectedType, setSelectedType] = useState<InspectionType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [bookingResponse, setBookingResponse] = useState<any>(null);
   const [details, setDetails] = useState<InspectionDetails>({
     type: 'virtual',
     scheduledFor: '',
@@ -116,7 +117,6 @@ export function InspectionBookingModal({
   const handleBookingSubmit = async () => {
     setLoading(true);
     try {
-      // Note: This endpoint doesn't exist yet - needs backend implementation
       const response = await fetch('/api/inspections', {
         method: 'POST',
         headers: {
@@ -124,18 +124,19 @@ export function InspectionBookingModal({
         },
         body: JSON.stringify({
           propertyId,
-          type: details.type,
-          scheduledFor: `${details.scheduledFor}T${details.scheduledTime}:00`,
-          maxParticipants: details.maxParticipants,
-          specialRequests: details.specialRequests,
+          type: details.type.toUpperCase(), // Convert to match API enum
+          scheduledAt: `${details.scheduledFor}T${details.scheduledTime}:00.000Z`,
+          notes: details.specialRequests,
         }),
       });
 
       if (response.ok) {
+        const data = await response.json();
+        setBookingResponse(data);
         setStep('confirmation');
       } else {
         const error = await response.json();
-        alert(`Booking failed: ${error.message}`);
+        alert(`Booking failed: ${error.error || error.message}`);
       }
     } catch (error) {
       console.error('Booking error:', error);
@@ -148,6 +149,7 @@ export function InspectionBookingModal({
   const resetModal = () => {
     setStep('select');
     setSelectedType(null);
+    setBookingResponse(null);
     setDetails({
       type: 'virtual',
       scheduledFor: '',
@@ -425,7 +427,7 @@ export function InspectionBookingModal({
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Booking ID</span>
-                    <span className="font-mono">#INS-{Date.now().toString().slice(-6)}</span>
+                    <span className="font-mono">#{bookingResponse?.inspection?.id?.slice(-8).toUpperCase() || 'PENDING'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Date & Time</span>
@@ -440,12 +442,15 @@ export function InspectionBookingModal({
             </Card>
 
             <div className="bg-blue-50 p-4 rounded-lg text-left">
-              <h4 className="font-medium text-blue-900 mb-2">Next Steps:</h4>
+              <h4 className="font-medium text-blue-900 mb-2">What happens next:</h4>
               <ul className="text-sm text-blue-800 space-y-1">
-                <li>1. Check your WhatsApp and email for confirmation</li>
-                <li>2. You&apos;ll receive inspector details 24h before</li>
-                {details.type === 'virtual' && <li>3. Google Meet link will be shared 1h before</li>}
-                <li>4. Inspection report delivered within 24h after completion</li>
+                <li>✓ Confirmation sent to your email and WhatsApp</li>
+                <li>✓ Available inspectors notified of this job</li>
+                <li>• Inspector will be assigned within 2-4 hours</li>
+                <li>• You'll receive inspector contact details 24h before</li>
+                {details.type === 'virtual' && <li>• Google Meet link shared 1h before inspection</li>}
+                {details.type === 'physical' && <li>• Inspector will contact you to confirm timing</li>}
+                <li>• Detailed inspection report delivered within 24h</li>
               </ul>
             </div>
 

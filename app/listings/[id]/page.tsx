@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { TopNav } from '@/components/navigation/top-nav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { TopNav } from '@/components/navigation/top-nav';
 import { 
   MapPin, 
   Bed, 
@@ -119,8 +119,6 @@ export default function PropertyDetailPage() {
 
   return (
     <div className="min-h-screen ">
-      <TopNav />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">

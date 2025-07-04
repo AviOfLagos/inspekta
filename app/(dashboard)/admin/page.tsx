@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -246,7 +247,6 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -617,6 +617,5 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
-    </div>
   );
 }

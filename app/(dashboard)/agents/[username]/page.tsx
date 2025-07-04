@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { TopNav } from '@/components/navigation/top-nav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -145,7 +144,6 @@ export default function AgentProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <TopNav />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -159,7 +157,6 @@ export default function AgentProfilePage() {
   if (!agent) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <TopNav />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Agent Not Found</h1>
@@ -187,8 +184,6 @@ export default function AgentProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNav />
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <div className="mb-6">

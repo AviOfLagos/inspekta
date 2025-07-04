@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -337,9 +338,11 @@ export function CreateListingForm({ agentId, onSuccess, onCancel }: CreateListin
                   {uploadedImages.map((image) => (
                     <div key={image.id} className="relative group">
                       <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border">
-                        <img
+                        <Image
                           src={image.url}
                           alt={image.originalName}
+                          width={300}
+                          height={200}
                           className="w-full h-full object-cover"
                         />
                       </div>

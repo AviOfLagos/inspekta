@@ -54,11 +54,29 @@ model User {
   verificationStatus VerificationStatus @default(PENDING)
   ninNumber          String?
   bvnNumber          String?
-  companyId          String?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  username           String?            @unique
-  password           String?
+  companyId                   String?
+  onboardingCompleted         Boolean            @default(false)
+  onboardingCompletedAt       DateTime?
+  onboardingStep              OnboardingStep?           @default(EMAIL_VERIFICATION)
+  profileCompleteness         Float                     @default(0.0)
+  phoneVerified               Boolean                   @default(false)
+  phoneVerificationToken      String?
+  phoneVerificationExpires    DateTime?
+  documentsSubmitted          Boolean                   @default(false)
+  documentsVerified           Boolean                   @default(false)
+  documentsVerificationStatus DocumentVerificationStatus? @default(NOT_SUBMITTED)
+  identityVerified            Boolean                   @default(false)
+  identityVerificationStatus  IdentityVerificationStatus? @default(NOT_STARTED)
+  profileSetupCompleted       Boolean            @default(false)
+  termsAccepted               Boolean            @default(false)
+  termsAcceptedAt             DateTime?
+  privacyPolicyAccepted       Boolean            @default(false)
+  privacyPolicyAcceptedAt     DateTime?
+  marketingConsent            Boolean            @default(false)
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
+  username              String?            @unique
+  password              String?
   accounts           Account[]
   agentProfile       AgentProfile?
   clientProfile      ClientProfile?
@@ -77,6 +95,11 @@ model User {
   subscriptions      Subscription[]
   uploadedFiles      UploadedFile[]
   company            Company?           @relation(fields: [companyId], references: [id])
+
+  @@index([role, verificationStatus])
+  @@index([companyId])
+  @@index([email, role])
+  @@index([username])
 }
 
 model Company {
@@ -104,6 +127,8 @@ model ClientProfile {
   budgetMin         Float?
   budgetMax         Float?
   propertyType      String?
+  bedrooms          String?
+  state             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,6 +141,9 @@ model AgentProfile {
   guarantor1Phone String?
   guarantor2Name  String?
   guarantor2Phone String?
+  bio             String?
+  experience      String?
+  specialization  String?
   listingCount    Int      @default(0)
   successfulDeals Int      @default(0)
   createdAt       DateTime @default(now())
@@ -168,6 +196,14 @@ model Listing {
   referrals     Referral[]
   savedBy       SavedListing[]
   uploadedFiles UploadedFile[]
+
+  @@index([status, featured, tier, createdAt])
+  @@index([type, status])
+  @@index([city, state])
+  @@index([price])
+  @@index([agentId])
+  @@index([companyId])
+  @@index([latitude, longitude])
 }
 
 model Inspection {
@@ -363,6 +399,32 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum DocumentVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+  NOT_SUBMITTED
+}
+
+enum IdentityVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  INCOMPLETE
+  NOT_STARTED
+}
+
+enum OnboardingStep {
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+  PROFILE_SETUP
+  IDENTITY_VERIFICATION
+  DOCUMENT_UPLOAD
+  TERMS_ACCEPTANCE
+  COMPLETED
+}
+
 enum PropertyType {
   APARTMENT
   HOUSE
@@ -440,5 +502,7 @@ enum NotificationType {
   LISTING_SAVED
   VERIFICATION_APPROVED
   VERIFICATION_REJECTED
+  NEW_JOB_AVAILABLE
+  JOB_ACCEPTED
   GENERAL
 }

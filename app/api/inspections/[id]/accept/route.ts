@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { UserRole, InspectionStatus } from '@/lib/generated/prisma';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * @swagger
@@ -251,11 +252,48 @@ export async function POST(
       }
     });
 
-    // TODO: Send notification emails
-    // - Notify client that inspector has been assigned
-    // - Notify agent that inspection is confirmed
-    // - Send inspector confirmation with details
-    // - For virtual inspections, send meeting link to all parties
+    // Send real-time notifications
+    try {
+      // Notify all clients that an inspector has been assigned
+      for (const client of inspection.clients) {
+        await NotificationService.notifyInspectionAccepted(
+          client.client.id,
+          inspection.id,
+          inspection.listing.title,
+          inspector.name || 'Inspector'
+        );
+      }
+
+      // Notify the agent that inspection is confirmed
+      if (inspection.listing.agent) {
+        await NotificationService.createNotification({
+          userId: inspection.listing.agent.id,
+          type: 'INSPECTION_ACCEPTED',
+          title: 'Inspector Assigned',
+          message: `${inspector.name || 'An inspector'} has been assigned to inspect your property "${inspection.listing.title}".`,
+          inspectionId: inspection.id,
+          listingId: inspection.listing.id,
+        });
+      }
+
+      // Notify inspector with confirmation details
+      await NotificationService.createNotification({
+        userId: session.id,
+        type: 'JOB_ACCEPTED',
+        title: 'Job Accepted Successfully',
+        message: `You have successfully accepted the inspection job for "${inspection.listing.title}".${meetingUrl ? ` Meeting URL: ${meetingUrl}` : ''}`,
+        inspectionId: inspection.id,
+        listingId: inspection.listing.id,
+        metadata: {
+          meetingUrl,
+          scheduledAt: inspection.scheduledAt,
+          type: inspection.type
+        }
+      });
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the entire request if notifications fail
+    }
 
     return NextResponse.json({
       success: true,

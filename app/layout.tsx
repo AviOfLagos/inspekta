@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import './globals.css';
-import { TopNavbar } from '@/components/layout/top-navbar';
+import { TopNav } from '@/components/navigation/top-nav';
 import { FloatingDevNav } from '@/components/dev/floating-nav';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryProvider } from '@/components/providers/query-provider';
@@ -25,13 +25,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} antialiased`}>
+      <body className={`${geistSans.variable} antialiased`} suppressHydrationWarning>
         <QueryProvider>
           <ThemeProvider
             defaultTheme="system"
             storageKey="inspekta-ui-theme"
           >
-            <TopNavbar />
+            <TopNav />
             {children}
             <FloatingDevNav />
             <Toaster />

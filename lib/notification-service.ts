@@ -1,5 +1,29 @@
 import { prisma } from '@/lib/prisma';
 import { NotificationType } from '@/lib/generated/prisma';
+import { sendEmail } from '@/lib/email';
+import { 
+  createInspectionScheduledEmail, 
+  createInspectorAssignedEmail, 
+  createInspectionCompletedEmail,
+  createNewJobAvailableEmail 
+} from '@/lib/email-templates/inspection-emails';
+
+// Import real-time broadcast functions (only on server-side)
+let broadcastNotificationToUser: ((userId: string, notification: any) => boolean) | undefined;
+let broadcastNotificationToUsers: ((userIds: string[], notification: any) => number) | undefined;
+
+// Dynamically import SSE functions to avoid client-side issues
+const initializeBroadcast = async () => {
+  if (typeof window === 'undefined' && !broadcastNotificationToUser) {
+    try {
+      const sseModule = await import('@/lib/sse-server');
+      broadcastNotificationToUser = sseModule.broadcastNotificationToUser;
+      broadcastNotificationToUsers = sseModule.broadcastNotificationToUsers;
+    } catch (error) {
+      console.warn('Real-time notifications not available:', error);
+    }
+  }
+};
 
 interface CreateNotificationParams {
   userId: string;
@@ -31,6 +55,15 @@ export class NotificationService {
         },
       });
 
+      // Initialize broadcast functions if not already done
+      await initializeBroadcast();
+
+      // Send real-time notification if user is connected
+      if (broadcastNotificationToUser) {
+        const sent = broadcastNotificationToUser(params.userId, notification);
+        console.log(`Real-time notification ${sent ? 'sent' : 'queued'} for user ${params.userId}`);
+      }
+
       return notification;
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -58,6 +91,26 @@ export class NotificationService {
           metadata: params.metadata,
         })),
       });
+
+      // Initialize broadcast functions if not already done
+      await initializeBroadcast();
+
+      // Send real-time notifications to connected users
+      if (broadcastNotificationToUsers) {
+        const notificationData = {
+          type: params.type,
+          title: params.title,
+          message: params.message,
+          inspectionId: params.inspectionId,
+          listingId: params.listingId,
+          paymentId: params.paymentId,
+          metadata: params.metadata,
+          createdAt: new Date().toISOString(),
+        };
+        
+        const sentCount = broadcastNotificationToUsers(userIds, notificationData);
+        console.log(`Real-time notifications sent to ${sentCount}/${userIds.length} connected users`);
+      }
 
       return notifications;
     } catch (error) {
@@ -218,5 +271,157 @@ export class NotificationService {
       userId,
       ...template,
     });
+  }
+
+  /**
+   * Inspection-specific notification methods with email integration
+   */
+  static async notifyInspectionScheduledWithEmail(
+    inspection: any,
+    client: { id: string; name: string; email: string }
+  ) {
+    try {
+      // Create in-app notification
+      await this.notifyInspectionScheduled(
+        client.id,
+        inspection.id,
+        inspection.listing.title
+      );
+
+      // Send email notification
+      const emailData = {
+        propertyTitle: inspection.listing.title,
+        propertyLocation: inspection.listing.location,
+        inspectionType: inspection.type,
+        scheduledAt: inspection.scheduledAt,
+        inspectionId: inspection.id,
+        cost: inspection.fee,
+        clientName: client.name,
+        agentName: inspection.listing.agent?.name,
+      };
+
+      const emailTemplate = createInspectionScheduledEmail(client.email, emailData);
+      await sendEmail(emailTemplate);
+
+      console.log(`Inspection scheduled notification sent to ${client.email}`);
+    } catch (error) {
+      console.error('Error sending inspection scheduled notification:', error);
+    }
+  }
+
+  static async notifyInspectorAssignedWithEmail(
+    inspection: any,
+    client: { id: string; name: string; email: string },
+    inspector: { id: string; name: string; phone?: string }
+  ) {
+    try {
+      // Create in-app notification
+      await this.notifyInspectionAccepted(
+        client.id,
+        inspection.id,
+        inspection.listing.title,
+        inspector.name
+      );
+
+      // Send email notification
+      const emailData = {
+        propertyTitle: inspection.listing.title,
+        propertyLocation: inspection.listing.location,
+        inspectionType: inspection.type,
+        scheduledAt: inspection.scheduledAt,
+        inspectionId: inspection.id,
+        cost: inspection.fee,
+        clientName: client.name,
+        agentName: inspection.listing.agent?.name,
+        inspectorName: inspector.name,
+        inspectorPhone: inspector.phone,
+      };
+
+      const emailTemplate = createInspectorAssignedEmail(client.email, emailData);
+      await sendEmail(emailTemplate);
+
+      console.log(`Inspector assigned notification sent to ${client.email}`);
+    } catch (error) {
+      console.error('Error sending inspector assigned notification:', error);
+    }
+  }
+
+  static async notifyInspectionCompletedWithEmail(
+    inspection: any,
+    client: { id: string; name: string; email: string },
+    inspector: { name: string; phone?: string },
+    reportUrl?: string
+  ) {
+    try {
+      // Create in-app notification
+      await this.notifyInspectionCompleted(
+        client.id,
+        inspection.id,
+        inspection.listing.title
+      );
+
+      // Send email notification
+      const emailData = {
+        propertyTitle: inspection.listing.title,
+        propertyLocation: inspection.listing.location,
+        inspectionType: inspection.type,
+        scheduledAt: inspection.scheduledAt,
+        inspectionId: inspection.id,
+        cost: inspection.fee,
+        clientName: client.name,
+        agentName: inspection.listing.agent?.name,
+        inspectorName: inspector.name,
+        inspectorPhone: inspector.phone,
+        reportUrl,
+      };
+
+      const emailTemplate = createInspectionCompletedEmail(client.email, emailData);
+      await sendEmail(emailTemplate);
+
+      console.log(`Inspection completed notification sent to ${client.email}`);
+    } catch (error) {
+      console.error('Error sending inspection completed notification:', error);
+    }
+  }
+
+  static async notifyNewJobAvailableWithEmail(
+    inspection: any,
+    inspectors: Array<{ id: string; email: string }>,
+    client: { name: string }
+  ) {
+    try {
+      // Create in-app notifications for all inspectors
+      await this.createBulkNotifications(
+        inspectors.map(i => i.id),
+        {
+          type: 'NEW_JOB_AVAILABLE',
+          title: 'New Inspection Job Available',
+          message: `New ${inspection.type.toLowerCase()} inspection available for "${inspection.listing.title}".`,
+          inspectionId: inspection.id,
+          listingId: inspection.listing.id,
+        }
+      );
+
+      // Send email notifications to all inspectors
+      const emailPromises = inspectors.map(async (inspector) => {
+        const emailData = {
+          propertyTitle: inspection.listing.title,
+          propertyLocation: inspection.listing.location,
+          inspectionType: inspection.type,
+          scheduledAt: inspection.scheduledAt,
+          inspectionId: inspection.id,
+          cost: inspection.fee,
+          clientName: client.name,
+        };
+
+        const emailTemplate = createNewJobAvailableEmail(inspector.email, emailData);
+        return sendEmail(emailTemplate);
+      });
+
+      await Promise.allSettled(emailPromises);
+      console.log(`New job notification sent to ${inspectors.length} inspectors`);
+    } catch (error) {
+      console.error('Error sending new job notifications:', error);
+    }
   }
 }

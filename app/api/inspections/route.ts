@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { InspectionType, InspectionStatus, UserRole } from '@/lib/generated/prisma';
+import { NotificationService } from '@/lib/notification-service';
 
 /**
  * @swagger
@@ -388,10 +389,53 @@ export async function POST(request: Request) {
       }
     });
 
-    // TODO: Send notification emails
-    // - Notify property agent of new inspection request
-    // - Notify available inspectors of new job opportunity
-    // - Send confirmation email to client
+    // Send real-time notifications
+    try {
+      // Notify the client that their inspection was scheduled
+      await NotificationService.notifyInspectionScheduled(
+        session.id, 
+        inspection.id, 
+        property.title
+      );
+
+      // Notify the property agent of new inspection request
+      if (property.agent) {
+        await NotificationService.createNotification({
+          userId: property.agent.id,
+          type: 'INSPECTION_SCHEDULED',
+          title: 'New Inspection Request',
+          message: `A client has scheduled an inspection for your property "${property.title}".`,
+          inspectionId: inspection.id,
+          listingId: property.id,
+        });
+      }
+
+      // Notify available inspectors of new job opportunity
+      const availableInspectors = await prisma.user.findMany({
+        where: {
+          role: UserRole.INSPECTOR,
+          verificationStatus: 'VERIFIED',
+          // TODO: Add location-based filtering
+        },
+        select: { id: true }
+      });
+
+      if (availableInspectors.length > 0) {
+        await NotificationService.createBulkNotifications(
+          availableInspectors.map(inspector => inspector.id),
+          {
+            type: 'NEW_JOB_AVAILABLE',
+            title: 'New Inspection Job Available',
+            message: `New ${type.toLowerCase()} inspection available for "${property.title}" on ${scheduledDate.toLocaleDateString()}.`,
+            inspectionId: inspection.id,
+            listingId: property.id,
+          }
+        );
+      }
+    } catch (notificationError) {
+      console.error('Error sending notifications:', notificationError);
+      // Don't fail the entire request if notifications fail
+    }
 
     return NextResponse.json({
       success: true,

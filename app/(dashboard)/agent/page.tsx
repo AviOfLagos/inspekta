@@ -7,10 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ListingCard } from '@/components/listings/listing-card';
 import { CreateListingForm } from '@/components/listings/create-listing-form';
-import { AgentScheduleInspectionModal } from '@/components/listings/agent-schedule-inspection';
 import { AgentVerificationForm } from '@/components/verification/agent-verification-form';
 import { SubscriptionStatus } from '@/components/subscriptions/subscription-status';
-import { SubscriptionModal } from '@/components/subscriptions/subscription-modal';
+import dynamic from 'next/dynamic';
+
+const AgentScheduleInspectionModal = dynamic(() => import('@/components/listings/agent-schedule-inspection').then(mod => mod.AgentScheduleInspectionModal), { ssr: false });
+const SubscriptionModal = dynamic(() => import('@/components/subscriptions/subscription-modal').then(mod => mod.SubscriptionModal), { ssr: false });
 
 import { 
   Plus, 

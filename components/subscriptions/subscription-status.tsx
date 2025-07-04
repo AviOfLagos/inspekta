@@ -2,18 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  CheckCircle,
-  AlertCircle,
-  Calendar,
-  CreditCard,
-  Crown,
-  XCircle,
-  RefreshCw
+import { Progress } from '@/components/ui/progress';
+import { 
+  Crown, 
+  CheckCircle, 
+  XCircle, 
+  Calendar, 
+  Users, 
+  Home, 
+  Shield, 
+  ArrowRight, 
+  RefreshCw, 
+  CreditCard, 
+  Download, 
+  AlertCircle 
 } from 'lucide-react';
-import { SubscriptionModal } from './subscription-modal';
+import dynamic from 'next/dynamic';
+
+const SubscriptionModal = dynamic(() => import('./subscription-modal').then(mod => mod.SubscriptionModal), { ssr: false });
 
 interface SubscriptionStatusProps {
   userRole: 'CLIENT' | 'AGENT' | 'COMPANY_ADMIN';

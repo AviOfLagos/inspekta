@@ -325,36 +325,85 @@ export const useSearchStore = create<SearchState>()(
 // Selector hooks to prevent unnecessary re-renders
 export const useRecentSearches = () => useSearchStore((state) => state.recentSearches);
 export const useFilterPresets = () => useSearchStore((state) => state.filterPresets);
-export const useCurrentSearch = () => useSearchStore((state) => ({
-  query: state.currentQuery,
-  filters: state.currentFilters,
-  isSearching: state.isSearching,
-}));
+
+// Separate hooks for individual properties to prevent infinite loops
+export const useCurrentQuery = () => useSearchStore((state) => state.currentQuery);
+export const useCurrentFilters = () => useSearchStore((state) => state.currentFilters);
+export const useIsSearching = () => useSearchStore((state) => state.isSearching);
+
+// Composite hook that returns all current search state
+export const useCurrentSearch = () => {
+  const query = useCurrentQuery();
+  const filters = useCurrentFilters();
+  const isSearching = useIsSearching();
+  
+  return { query, filters, isSearching };
+};
 export const useSearchSettings = () => useSearchStore((state) => ({
   maxHistoryItems: state.maxHistoryItems,
   enableSuggestions: state.enableSuggestions,
   enableHistory: state.enableHistory,
 }));
 
-// Action hooks
-export const useSearchActions = () => useSearchStore((state) => ({
-  addSearch: state.addSearch,
-  removeSearch: state.removeSearch,
-  clearSearchHistory: state.clearSearchHistory,
-  saveFilterPreset: state.saveFilterPreset,
-  deleteFilterPreset: state.deleteFilterPreset,
-  applyFilterPreset: state.applyFilterPreset,
-  setCurrentQuery: state.setCurrentQuery,
-  setCurrentFilters: state.setCurrentFilters,
-  setIsSearching: state.setIsSearching,
-  clearCurrentSearch: state.clearCurrentSearch,
-  updateSettings: state.updateSettings,
-}));
+// Individual action hooks to prevent object recreation
+export const useAddSearch = () => useSearchStore((state) => state.addSearch);
+export const useRemoveSearch = () => useSearchStore((state) => state.removeSearch);
+export const useClearSearchHistory = () => useSearchStore((state) => state.clearSearchHistory);
+export const useSaveFilterPreset = () => useSearchStore((state) => state.saveFilterPreset);
+export const useDeleteFilterPreset = () => useSearchStore((state) => state.deleteFilterPreset);
+export const useApplyFilterPreset = () => useSearchStore((state) => state.applyFilterPreset);
+export const useSetCurrentQuery = () => useSearchStore((state) => state.setCurrentQuery);
+export const useSetCurrentFilters = () => useSearchStore((state) => state.setCurrentFilters);
+export const useSetIsSearching = () => useSearchStore((state) => state.setIsSearching);
+export const useClearCurrentSearch = () => useSearchStore((state) => state.clearCurrentSearch);
+export const useUpdateSettings = () => useSearchStore((state) => state.updateSettings);
 
-// Helper hooks
-export const useSearchHelpers = () => useSearchStore((state) => ({
-  getRecentLocations: state.getRecentLocations,
-  getPopularFilters: state.getPopularFilters,
-  getSearchSuggestions: state.getSearchSuggestions,
-  updateSuggestionFrequency: state.updateSuggestionFrequency,
-}));
+// Composite action hooks for convenience
+export const useSearchActions = () => {
+  const addSearch = useAddSearch();
+  const removeSearch = useRemoveSearch();
+  const clearSearchHistory = useClearSearchHistory();
+  const saveFilterPreset = useSaveFilterPreset();
+  const deleteFilterPreset = useDeleteFilterPreset();
+  const applyFilterPreset = useApplyFilterPreset();
+  const setCurrentQuery = useSetCurrentQuery();
+  const setCurrentFilters = useSetCurrentFilters();
+  const setIsSearching = useSetIsSearching();
+  const clearCurrentSearch = useClearCurrentSearch();
+  const updateSettings = useUpdateSettings();
+
+  return {
+    addSearch,
+    removeSearch,
+    clearSearchHistory,
+    saveFilterPreset,
+    deleteFilterPreset,
+    applyFilterPreset,
+    setCurrentQuery,
+    setCurrentFilters,
+    setIsSearching,
+    clearCurrentSearch,
+    updateSettings,
+  };
+};
+
+// Individual helper hooks
+export const useGetRecentLocations = () => useSearchStore((state) => state.getRecentLocations);
+export const useGetPopularFilters = () => useSearchStore((state) => state.getPopularFilters);
+export const useGetSearchSuggestions = () => useSearchStore((state) => state.getSearchSuggestions);
+export const useUpdateSuggestionFrequency = () => useSearchStore((state) => state.updateSuggestionFrequency);
+
+// Composite helper hooks for convenience
+export const useSearchHelpers = () => {
+  const getRecentLocations = useGetRecentLocations();
+  const getPopularFilters = useGetPopularFilters();
+  const getSearchSuggestions = useGetSearchSuggestions();
+  const updateSuggestionFrequency = useUpdateSuggestionFrequency();
+
+  return {
+    getRecentLocations,
+    getPopularFilters,
+    getSearchSuggestions,
+    updateSuggestionFrequency,
+  };
+};
